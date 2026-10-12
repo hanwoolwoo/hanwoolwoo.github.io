@@ -215,7 +215,7 @@ async function viewHome(me){
       <div class="hint" id="rc-name">티맵·카카오T 앱 <b>영수증 내려받기</b>가 가장 정확</div><img id="preview"></div>
     <div class="fields">
       <label>구간 <b>(선택)</b></label><input type="text" id="rc-route" placeholder="광명 → 홍제역">
-      <div class="row2"><div><label>탑승일</label><input type="text" id="rc-date" inputmode="numeric" placeholder="7/24"></div>
+      <div class="row2"><div><label>탑승일</label><input type="text" id="rc-date" inputmode="decimal" placeholder="10. 10"></div>
         <div><label>요금</label><input type="text" id="rc-fare" inputmode="numeric" placeholder="12300"></div></div>
       <label>목적</label><input type="text" id="rc-purpose" placeholder="아이템 취재"></div>
     <button id="btn-submit">제출하기</button>
@@ -236,11 +236,14 @@ async function viewHome(me){
     try{
       const {data,mime,name}=await prepareFile(f,ext);
       const r=await api('receipt',{filename:name,mime,data,route:$('rc-route').value.trim(),
-        date:$('rc-date').value.trim(),fare:$('rc-fare').value.trim(),purpose:$('rc-purpose').value.trim()});
+        date:normDate($('rc-date').value),fare:$('rc-fare').value.trim(),purpose:$('rc-purpose').value.trim()});
       if(r.ok){$('rc-msg').className='msg ok';$('rc-msg').textContent='✅ 제출됐습니다';route()}
       else{$('rc-msg').textContent=r.msg;e.target.disabled=false}
     }catch(err){$('rc-msg').textContent='파일을 읽지 못했습니다';e.target.disabled=false}};
 }
+// 탑승일: 숫자 키패드에 '/'가 없는 폰이 있어 '10. 10'·'10.10'·'10 10'·'1010'(MMDD)·'925'(MDD)을 모두 받는다.
+// 구분자가 있으면 서버가 숫자만 뽑아 쓰므로 그대로 보내고, 숫자만 붙여 쓴 경우만 M/D로 나눈다.
+function normDate(v){v=v.trim();const m=v.match(/^(\d{1,2})(\d{2})$/);return m?Number(m[1])+'/'+Number(m[2]):v}
 // 큰 사진(4MB 초과)만 긴 변 2400px JPEG로 줄인다. PDF·작은 파일·HEIC는 원본 그대로.
 function prepareFile(f,ext){
   const raw=()=>new Promise((ok,no)=>{const fr=new FileReader();
