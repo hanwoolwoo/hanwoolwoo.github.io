@@ -212,17 +212,11 @@ async function viewHome(me){
   $('main').innerHTML=`<div class="card"><h2 class="tight">🧾 영수증 제출</h2>
     <div class="filebox"><input type="file" id="rc-file" accept="image/*,.pdf" hidden>
       <button type="button" class="pick" id="btn-pick">📄 영수증 올리기</button>
-      <div class="hint" id="rc-name">티맵·카카오T 앱 <b>영수증 내려받기</b>가 가장 정확</div><img id="preview"></div>
-    <div class="fields">
-      <label>구간 <b>(선택)</b></label><input type="text" id="rc-route" placeholder="광명 → 홍제역">
-      <div class="row2"><div><label>탑승일</label><input type="text" id="rc-date" inputmode="decimal" placeholder="10.10"></div>
-        <div><label>요금</label><input type="text" id="rc-fare" inputmode="numeric" placeholder="12300"></div></div>
-      <label>목적</label><input type="text" id="rc-purpose" placeholder="아이템 취재"></div>
+      <div class="hint" id="rc-name">티맵·카카오T 앱 <b>영수증 내려받기</b>가 가장 정확<br>날짜·요금·구간은 영수증에서 자동으로 읽습니다</div><img id="preview"></div>
     <button id="btn-submit">제출하기</button>
     <div class="hint" style="margin-top:9px">종이 영수증을 찍어 올렸다면 <b>실물은 이주언 행정에게 따로 제출</b></div>
     <div class="msg" id="rc-msg"></div></div>
   <div class="card"><h2>🗂 최근 제출 내역 (이번 달·지난달)</h2><ul class="list">${rows}</ul>
-    ${me.fare_total?`<div class="total"><span>요금 입력분 합계</span><span>${esc(me.fare_total)}</span></div>`:''}
     <div class="notice" style="margin-top:12px">말일에 일괄로 신청서가 만들어져 이주언 행정에게 전달됩니다. 종이 영수증 실물은 따로 제출해 주세요.</div></div>`;
   const rf=$('rc-file');
   $('btn-pick').onclick=()=>rf.click();
@@ -235,15 +229,11 @@ async function viewHome(me){
     e.target.disabled=true;$('rc-msg').className='msg';$('rc-msg').textContent='업로드 중…';
     try{
       const {data,mime,name}=await prepareFile(f,ext);
-      const r=await api('receipt',{filename:name,mime,data,route:$('rc-route').value.trim(),
-        date:normDate($('rc-date').value),fare:$('rc-fare').value.trim(),purpose:$('rc-purpose').value.trim()});
+      const r=await api('receipt',{filename:name,mime,data});
       if(r.ok){$('rc-msg').className='msg ok';$('rc-msg').textContent='✅ 제출됐습니다';route()}
       else{$('rc-msg').textContent=r.msg;e.target.disabled=false}
     }catch(err){$('rc-msg').textContent='파일을 읽지 못했습니다';e.target.disabled=false}};
 }
-// 탑승일: 숫자 키패드에 '/'가 없는 폰이 있어 '10. 10'·'10.10'·'10 10'·'1010'(MMDD)·'925'(MDD)을 모두 받는다.
-// 구분자가 있으면 서버가 숫자만 뽑아 쓰므로 그대로 보내고, 숫자만 붙여 쓴 경우만 M/D로 나눈다.
-function normDate(v){v=v.trim();const m=v.match(/^(\d{1,2})(\d{2})$/);return m?Number(m[1])+'/'+Number(m[2]):v}
 // 큰 사진(4MB 초과)만 긴 변 2400px JPEG로 줄인다. PDF·작은 파일·HEIC는 원본 그대로.
 function prepareFile(f,ext){
   const raw=()=>new Promise((ok,no)=>{const fr=new FileReader();
